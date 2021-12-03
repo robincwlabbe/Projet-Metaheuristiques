@@ -9,7 +9,7 @@ Projet d'optimisation des atterrissages dans un aéroport en lien avec le cours 
 
 ## Pour commencer
 
-Le projet a été développé à partir d'un prototype préconçu, fourni par les enseignants, permettant de lire des instances sur Julia contenant les données sur les avions. Notre rôle était d'implémenter des stratégies utilisant des méthodes métaheuristiques permettant de trouver des solutions optimisées du problème. Pour plus d'informations, se référer au sujet du projet. 
+Le projet a été développé à partir d'un prototype préconçu, fourni par les enseignants, permettant de lire des instances du problème d'optimisation des atterrissages sur Julia . Notre rôle était d'implémenter des stratégies utilisant des méthodes métaheuristiques permettant de trouver des solutions optimisées du problème. Pour plus d'informations, se référer au sujet du projet. 
 
 ## Développé avec
 * [![Julia](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/50px-Julia_Programming_Language_Logo.svg.png)](https://julialang.org/) - Langage de programmation
