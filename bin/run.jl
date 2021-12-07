@@ -30,14 +30,6 @@ Pkg.instantiate()
 # @show !empty(PROGRAM_FILE) && realpath(PROGRAM_FILE)
 # @show isinteractive()
 
-### TEST PRECOMPILATION START ###
-# include("$this_appdir/src/log_util.jl")
-# using .Log
-# include("$this_appdir/src/args.jl")
-# using .Args
-
-### TEST PRECOMPILATION END ###
-
 # ENV["JULIA_USING_ALL"] = 1  # for loading all package
 include("$this_appdir/src/Seqata.jl")
 using .Seqata
@@ -45,11 +37,12 @@ using .Seqata
 if basename(@__FILE__) == basename(PROGRAM_FILE)
     # Mode d'appel normal : on exécute le programme "bin/xxx.jl"
     if Args.get(:action) in [:none, :help]
-        # Exécution normale, mais sans aucun paramètre
-        Args.show_usage()
-        println("run.jl : AVANT APPEL À main()")
+        # Exécution normale, mais refusée car sans aucun paramètre 
+        # Args.show_usage() # show_usage inexistant dans proto p2022
+        print(Args.get_usage()) # new 07/12/2021 
         exit(0)
     end
+    # tout est prêt pour l'exécution effectif d'une action !
     main()
 else
     @assert(isinteractive())
