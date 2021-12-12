@@ -70,8 +70,19 @@ function solve!(sv::LpTimingSolver, sol::Solution)
     # À COMPLÉTER : variables ? contraintes ? ...
 
     # ...
+    n = sv.inst.nb_planes
+    
+    @variable(sv.model, x[1:n])
 
+    @constraint(sv.model, [i in 1:n], x[i] <= sv.inst.planes[i].ub)
+    @constraint(sv.model, [i in 1:n], x[i] >= sv.inst.planes[i].lb)
 
+    # ne pas oublier de trier avec la fonction initial_sort, il faut que l'instance envoyé au modèle soit triée
+    @constraint(sv.model, [i = 1:n, j = 1:n, i<j], x[i]< x[j])
+    @constraint(sv.model, [i = 1:n, j = 1:n, i<j], x[j] >= x[i] + get_sep(sv.inst,sv.inst.planes[i], sv.inst.planes[j]))
+    @objective(sv.model, Min, sum(get_cost(sv.inst.planes[i],x[i])))
+
+    
     # 2. résolution du problème à permu d'avion fixée
     #
     JuMP.optimize!(sv.model)
