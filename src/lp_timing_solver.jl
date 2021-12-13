@@ -1,5 +1,5 @@
 export LpTimingSolver, symbol, solve!
-
+using JuMP
 # Déclaration des packages utilisés dans ce fichier
 # certains sont déjà chargés dans le fichier usings.jl
 
@@ -57,13 +57,14 @@ end
 
 function solve!(sv::LpTimingSolver, sol::Solution)
 
-    error("\n\nMéthode solve!(sv::LpTimingSolver, ...) non implanté : AU BOULOT :-)\n\n")
+    #error("\n\nMéthode solve!(sv::LpTimingSolver, ...) non implanté : AU BOULOT :-)\n\n")
 
     sv.nb_calls += 1
 
     #
     # 1. Création du modèle spécifiquement pour cet ordre d'avion de cette solution
     #
+    initial_sort!(sol)
 
     sv.model = new_lp_model()
 
@@ -72,20 +73,20 @@ function solve!(sv::LpTimingSolver, sol::Solution)
     # ...
     n = sv.inst.nb_planes
     
-    @variable(sv.model, x[1:n])
+    @variable(sv.model, y[1:n],Int)
+    @constraint(sv.model, [i in 1:n], y[i] <= sol.inst.planes[i].ub)
+    @constraint(sv.model, [i in 1:n], y[i] >= sol.inst.planes[i].lb)
 
-    @constraint(sv.model, [i in 1:n], x[i] <= sv.inst.planes[i].ub)
-    @constraint(sv.model, [i in 1:n], x[i] >= sv.inst.planes[i].lb)
-
-    # ne pas oublier de trier avec la fonction initial_sort, il faut que l'instance envoyé au modèle soit triée
-    @constraint(sv.model, [i = 1:n, j = 1:n, i<j], x[i]< x[j])
-    @constraint(sv.model, [i = 1:n, j = 1:n, i<j], x[j] >= x[i] + get_sep(sv.inst,sv.inst.planes[i], sv.inst.planes[j]))
-    @objective(sv.model, Min, sum(get_cost(sv.inst.planes[i],x[i])))
-
+    # ne pas oublier de trier avec la fonction initial_sort, il faut que l'instance envoyé au modèle soit triée et le reste
+    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], y[j] - y[i] >= 0)
+    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], y[j] - y[i] >= get_sep(sv.inst,sol.inst.planes[i], sol.inst.planes[j]))
     
+    
+    @objective(sol.model, Min, get_cost(sol.inst.planes[1],y[i],))
+
+
     # 2. résolution du problème à permu d'avion fixée
-    #
-    JuMP.optimize!(sv.model)
+    
 
     # 3. Test de la validité du résultat et mise à jour de la solution
     if JuMP.termination_status(sv.model) == MOI.OPTIMAL
