@@ -69,15 +69,22 @@ function solve!(sv::LpTimingSolver, sol::Solution)
 
     # À COMPLÉTER : variables ? contraintes ? ...
     n = sv.inst.nb_planes
+    planes = sv.inst.planes
+    @variable(sv.model, x[1:n],Int)
+    @variable(sv.model, y[1:n], Bin)
     
-    @variable(sv.model, y[1:n],Int)
+    @constraint(sv.model,[i in 1:n], y[i] => {x[i] <= planes[i].target})
 
-    @constraint(sv.model, [i in 1:n], y[i] <= sol.inst.planes[i].ub)
-    @constraint(sv.model, [i in 1:n], y[i] >= sol.inst.planes[i].lb)
-    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], y[j] - y[i] >= 0)
-    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], y[j] - y[i] >= get_sep(sv.inst,sol.inst.planes[i], sol.inst.planes[j]))
+    @constraint(sv.model, [i in 1:n], x[i] <= planes[i].ub)
+    @constraint(sv.model, [i in 1:n], x[i] >= planes[i].lb)
+    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], x[j] - x[i] >= 0)
+    @constraint(sv.model, [i = 1:n, j = 1:n; i<j], x[j] - x[i] >= get_sep(sv.inst,planes[i], planes[j]))
 
-    @objective(sv.model, Min, get_cost(sol.inst.planes[1],y[1]))
+    @objective(sv.model, Min, sum(y[i]*planes[i].ep*(planes[i].target-x[i]) +
+     (1-y[i])*planes[i].tp*(x[i]-planes[i].target) for i in 1:n))
+   
+ 
+
 
 
     # 2. résolution du problème à permu d'avion fixée
