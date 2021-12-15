@@ -118,7 +118,7 @@ function solve!(sv::LpTimingSolver, sol::Solution)
         # ATTENTION : les tableaux x et costs sont dans l'ordre de
         # l'instance et non pas de la solution !
         for (i, p) in enumerate(sol.planes)
-            sol.x[i] = round(Int, value(sv.x[p.id]))
+            sol.x[i] = round(Int, value(sv.x[i]))
             # Cet arrondi permet d'utiliser le solver linéaire Tulip qui utilise
             # une méthode de points intérieurs et qui contrairement au simplexe, 
             # ne donne pas nécessairement une solution située sur un point extrème
@@ -126,7 +126,7 @@ function solve!(sv::LpTimingSolver, sol::Solution)
             # Cela est possible car pour toutes les instances, les pénalités 
             # unitaire sont exprimées en centièmes.
             # sol.costs[i] = value(sv.costs[p.id])
-            sol.costs[i] = round(value(sv.costs[p.id], digits=2))
+            sol.costs[i] = round(value(sv.costs[p.id]), digits=2)
         end
         prec = Args.get(:cost_precision)
         sol.cost = round(value(sv.cost), digits = prec)
