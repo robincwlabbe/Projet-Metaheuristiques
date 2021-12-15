@@ -168,7 +168,76 @@ function solve!(
         # On modifie testsol, puis on teste sa valeur, puis on...
         #
         # ...
+        prevcost = sv.cursol.cost
+        
+        copy!(sv.testsol, sv.cursol) # on fait une copie de la solution courante pour tester 
+        # si un voisin aléatoire est meilleur
 
+        # On pourrait paramétrer la distance maxi du voisin
+        # shift_max = -1   # -1 pour pas de limite !
+        shift_max = 2
+        # shift_max = 1
+        if shift_max == -1
+            i1 = i2 = -1
+        else
+            i1 = rand(1:length(sv.inst.planes))
+            i2 = i1
+            while i2 == i1
+                i2_min = max(i1 - shift_max, 1)
+                i2_max = min(i1 + shift_max, length(sv.inst.planes))
+                i2 = rand(i2_min:i2_max)
+            end
+        end
+
+        swap!(sv.testsol, i1, i2) # on swap la testsol et pas encore la cursol !
+        println("APRES SWAP: ", to_s(sv.cursol))
+        degrad = sv.testsol.cost - prevcost
+        ln4("degrad=$(degrad)")
+        if degrad < 0
+            # Ce voisin est meilleur : on l'accepte
+            lg3("+")
+            copy!(sv.cursol, sv.testsol)
+            sv.nb_move += 1 # on bouge vers une autre solution
+            sv.nb_cons_reject = 0 # on réinitialise le nombre de rejets consécutifs
+            # mise a jour éventuelle de la meilleure solution
+            if sv.testsol.cost < sv.bestsol.cost
+                # La sauvegarde dans bestsol n'est utile que si on ne fait pas une descente pure
+                # mais on sauvegarde quand même vu que l'attribut existe dans la classe ?
+                copy!(sv.bestsol, sv.testsol)
+                if lg1()
+                    msg =
+                        string("\niter ", sv.nb_test, "=", sv.nb_move, "+", sv.nb_reject)
+                    if lg2()
+                        # affiche coût + ordre des avions
+                        msg *= string(" => ", to_s(sv.bestsol))
+                    else
+                        # affiche seulement le coût
+                        msg *= string(" => ", sv.bestsol.cost)
+                    end
+                    print(msg)
+                end
+            end
+        else # degrad < 0
+            # Ce voisin est plus mauvais : on ne l'accepte pas (car descente) !!
+            sv.nb_reject += 1
+            sv.nb_cons_reject += 1
+            if Log.level() in 3:3      # idem à : if lg3() && !lg4()
+                print("-")
+            end
+            if lg4()
+                msg = string(
+                    "\n     ",
+                    sv.nb_test,
+                    ":",
+                    sv.nb_move,
+                    "+/",
+                    sv.nb_reject,
+                    "- cursol=",
+                    to_s(sv.cursol),
+                )
+                print(msg)
+            end
+        end
     end # fin while !finished
     ln2("END solve!(DescentSolver)")
 end
