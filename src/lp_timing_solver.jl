@@ -1,5 +1,5 @@
 export LpTimingSolver, symbol, solve!
-
+using JuMP
 # Déclaration des packages utilisés dans ce fichier
 # certains sont déjà chargés dans le fichier usings.jl
 
@@ -57,7 +57,7 @@ end
 
 function solve!(sv::LpTimingSolver, sol::Solution)
 
-    error("\n\nMéthode solve!(sv::LpTimingSolver, ...) non implanté : AU BOULOT :-)\n\n")
+    #error("\n\nMéthode solve!(sv::LpTimingSolver, ...) non implanté : AU BOULOT :-)\n\n")
 
     sv.nb_calls += 1
 
@@ -65,11 +65,38 @@ function solve!(sv::LpTimingSolver, sol::Solution)
     # 1. Création du modèle spécifiquement pour cet ordre d'avion de cette solution
     #
 
+
     sv.model = new_lp_model()
 
-    # À COMPLÉTER : variables ? contraintes ? ...
+    # À COMPLÉTER : variables ? contraintes ? objectif ?
+    
+    n = sv.inst.nb_planes
+    planes = sol.planes
 
-    # ...
+    # Variables
+    @variable(sv.model, x[1:n] >= 0) # temps d'arrivée
+    @variable(sv.model, x_ep[1:n] >= 0) # variable pour un avion en avance sur sa target
+    @variable(sv.model, x_tp[1:n] >= 0) # variable pour un avion en retard sur sa target
+
+    # Contraintes 
+
+    # Respect des contraintes d'heure d'arrivée
+    @constraint(sv.model, [i in 1:n], x[i] >= planes[i].lb)
+    @constraint(sv.model, [i in 1:n], x[i] <= planes[i].ub)
+
+    # Contraintes sur les valeurs x_ep et x_tp
+    # La minimisation de l'objectif entrainera x_ep > 0 ==> x_tp ==0
+    # et planes[i].target - x[i] >= 0 ==> x_ep[i] == planes[i].target - x[i]
+    @constraint(sv.model, [i in 1:n], x_ep[i] >= planes[i].target - x[i]) 
+
+    # Et réciproquement
+    @constraint(sv.model, [i in 1:n], x_tp[i] >= -(planes[i].target - x[i])) 
+
+    # Il faut également respecter les délais entre deux arrivées successives
+    @constraint(sv.model, [i in 1:n,j in 1:n; i<j], x[j] >= x[i] + get_sep(sol.inst, planes[i],planes[j]))
+
+    # Objectif
+    @objective(sv.model, Min ,sum(planes[i].ep * x_ep[i] + planes[i].tp * x_tp[i] for i in 1:n))
 
 
     # 2. résolution du problème à permu d'avion fixée
@@ -79,13 +106,19 @@ function solve!(sv::LpTimingSolver, sol::Solution)
     # 3. Test de la validité du résultat et mise à jour de la solution
     if JuMP.termination_status(sv.model) == MOI.OPTIMAL
         # tout va bien, on peut exploiter le résultat
-
+    
         # 4. Extraction des valeurs des variables d'atterrissage
+        sv.x = value.(x)
+        sv.cost = objective_value(sv.model)
+        sv.costs = [0 for i in 1:n]
+        for i in 1:n
+            sv.costs[i] = get_cost(planes[i],round(Int,value(sv.x[i])))
+        end
 
         # ATTENTION : les tableaux x et costs sont dans l'ordre de
         # l'instance et non pas de la solution !
         for (i, p) in enumerate(sol.planes)
-            sol.x[i] = round(Int, value(sv.x[p.id]))
+            sol.x[i] = round(Int, value(sv.x[i]))
             # Cet arrondi permet d'utiliser le solver linéaire Tulip qui utilise
             # une méthode de points intérieurs et qui contrairement au simplexe, 
             # ne donne pas nécessairement une solution située sur un point extrème
@@ -93,7 +126,7 @@ function solve!(sv::LpTimingSolver, sol::Solution)
             # Cela est possible car pour toutes les instances, les pénalités 
             # unitaire sont exprimées en centièmes.
             # sol.costs[i] = value(sv.costs[p.id])
-            sol.costs[i] = round(value(sv.costs[p.id], digits=2))
+            sol.costs[i] = round(value(sv.costs[p.id]), digits=2)
         end
         prec = Args.get(:cost_precision)
         sol.cost = round(value(sv.cost), digits = prec)

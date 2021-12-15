@@ -864,4 +864,3 @@ function print_sol(sol::Solution, msg::AbstractString = "")
     println(to_s_long(sol))
     println("="^70)
 end
-
