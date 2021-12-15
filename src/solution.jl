@@ -866,9 +866,15 @@ function print_sol(sol::Solution, msg::AbstractString = "")
 end
 
 # Fonction qui swap deux avions consecutifs aléatoires
-function consecutif_swap!(sol::Solution, gap::Int = 1)
+function consecutif_swap!(sol::Solution)
     id_1 = rand(1:length(sol.planes))
-    id_2 = id_1 + rand([-gap,gap])
+    if id_1 == length(sol.planes)
+        id_2 = id_1 - 1
+    elseif id_1 == 1
+        id_2 = id_1 + 1
+    else
+        id_2 = id_1 + rand([-1,1])
+    end
     swap!(sol,id_1,id_2)
 end
 

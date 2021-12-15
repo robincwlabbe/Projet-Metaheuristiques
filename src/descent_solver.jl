@@ -167,10 +167,9 @@ function solve!(
         # On modifie testsol, puis on teste sa valeur, puis on...
         #
         # ...
-        copy!(sv.testsol,sv.cursol) # On crée un solution auxiliaire qu'on va manipuler (pour cherche son voisinage)
         consecutif_swap!(sv.testsol)
-        degrad = sv.testsol.cost - sv.cursol.cost
-        if degrad < 0 # s'il y a un gain du coût global
+
+        if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
 
             sv.nb_move +=1 # on effectue un deplacement vers un voisin
             sv.nb_reject = 0 # on remet le nombre de rejets à 0
@@ -191,6 +190,7 @@ function solve!(
                 print(msg)
             end
         else
+            sv.nb_move +=1 
             sv.nb_cons_reject += 1
             sv.nb_reject += 1
         end
