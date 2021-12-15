@@ -63,7 +63,7 @@ function new_lp_model(;solver = :auto,
         # Pour les options, voir :
         # - https://github.com/JuliaOpt/Gurobi.jl
         # - https://www.gurobi.com/documentation/current/refman/parameters.html
-        # GRB_ENV = Gurobi.Env() # Créer cette const après le using Gurobi
+        GRB_ENV = Gurobi.Env() # Créer cette const après le using Gurobi
         model = JuMP.Model(() -> Gurobi.Optimizer(GRB_ENV))
         if time_limit != 0
             set_optimizer_attribute(model, "TimeLimit", time_limit)
