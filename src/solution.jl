@@ -6,6 +6,7 @@ export solve!, disturb!, update_costs!
 export solve_to_earliest!
 export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
+export proportional_swap!,randomized_proportional_swap!
 # unexport Random.shuffle!
 # unexport Base.write
 # unexport Base.show
@@ -909,13 +910,36 @@ using StatsBase
 
 # swap qui privilégie les avions avec le plus gros coûts
 function proportional_swap!(sol::Solution)
-    id_1 = sample(1:length(sol.inst.nb_planes),sol.costs)
-    id_2 = id_1 + rand([-1,1])
+    id_1 = sample(ProbabilityWeights(sol.costs))
+    if id_1 == length(sol.planes)
+        id_2 = id_1 - 1
+    elseif id_1 == 1
+        id_2 = id_1 + 1
+    else
+        id_2 = id_1 + rand([-2,-1,1,2])
+    end
     swap!(sol,id_1,id_2)
 end
 
+# swap avec un probabilité binomiale, il y a peut-être une meilleure façon de traiter les bords
+function binomial_swap!(sol::Solution, gap::Int, p::Float64)
+    id_1 = rand(1:sol.inst.nb_planes)
+    loi = Binomial(gap,p)
+    move = rand([-1,1]) * rand(loi)
+    id_2 = id_1 + move
+
+    if id_2 <= 0
+        id_2 = id_1 + abs(move)
+    elseif id_2 > sol.inst.nb_planes
+        id_2 = id_1 - abs(move)
+    end
+
+    swap!(sol,id_1,id_2)
+end
+
+
 # mix entre un swap proportionnel et un swap totalement aléatoire
-function randomized_proportional_swap!(sol::Solution,random_rate::Float)
+function randomized_proportional_swap!(sol::Solution,random_rate::Float64 = 0.5)
     if rand() > random_rate 
         proportional_swap!(sol)
     else

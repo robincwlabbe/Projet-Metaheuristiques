@@ -120,7 +120,7 @@ end
 
 function solve!(
     sv::DescentSolver;
-    nb_cons_reject_max::Int = 10000,
+    nb_cons_reject_max::Int = 1000,
     durationmax::Int = 100,
     startsol::Union{Nothing,Solution} = nothing
 
@@ -169,7 +169,7 @@ function solve!(
         #
         # ...
         copy!(sv.testsol,sv.cursol)
-        proportional_swap!(sv.testsol)
+        binomial_swap!(sv.testsol,3,0.5)
 
         if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
 
