@@ -123,6 +123,8 @@ function solve!(
     nb_cons_reject_max::Int = 0,
     startsol::Union{Nothing,Solution} = nothing,
     durationmax::Int = 0,
+    shift_max::Int = 1,
+    nb_permu::Int = 1
 )
     ln2("BEGIN solve!(DescentSolver)")
     if durationmax != 0
@@ -154,8 +156,6 @@ function solve!(
 
     while !finished(sv)
         sv.nb_test += 1
-
-        error("\n\nMéthode solve!(DescentSolver, ...) non implanté : AU BOULOT :-)\n\n")
 
         # On peut ici tirer aléatoirement des voisinages différents plus ou
         # moins larges (exemple un swap simple ou deux swaps proches, ...)
