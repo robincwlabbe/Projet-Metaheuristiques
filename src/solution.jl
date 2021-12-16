@@ -777,7 +777,7 @@ end
 # une distance maximale shift_max (au sens de l'ordre des avions dans
 # la solution courante)
 # do_update : racalcule le coût (true par défaut)
-function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = True)
+function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = true)
     nb = 1
     swaps = []
     while nb <= nb_swap
@@ -903,4 +903,25 @@ function consecutif_swap!(sol::Solution)
     end
     swap!(sol,id_1,id_2)
 end
+
+using Distributions
+using StatsBase
+
+# swap qui privilégie les avions avec le plus gros coûts
+function proportional_swap!(sol::Solution)
+    id_1 = sample(1:length(sol.inst.nb_planes),sol.costs)
+    id_2 = id_1 + rand([-1,1])
+    swap!(sol,id_1,id_2)
+end
+
+# mix entre un swap proportionnel et un swap totalement aléatoire
+function randomized_proportional_swap!(sol::Solution,random_rate::Float)
+    if rand() > random_rate 
+        proportional_swap!(sol)
+    else
+        consecutif_swap!(sol)
+    end
+end
+
+
 

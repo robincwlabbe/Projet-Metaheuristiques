@@ -169,14 +169,14 @@ function solve!(
         #
         # ...
         copy!(sv.testsol,sv.cursol)
-        consecutif_swap!(sv.testsol)
+        proportional_swap!(sv.testsol)
 
         if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
 
             sv.nb_move +=1 # on effectue un deplacement vers un voisin
-            sv.nb_reject = 0 # on remet le nombre de rejets à 0
+            sv.nb_cons_reject = 0 # on remet le nombre de rejets à 0
             copy!(sv.cursol,sv.testsol) # on se deplace vers le voisin
-            if sv.cursol.costs < sv.bestsol.costs # on met à jour la solution si elle est meilleure que la meilleure actuelle
+            if sv.cursol.cost < sv.bestsol.cost # on met à jour la solution si elle est meilleure que la meilleure actuelle
                 copy!(sv.bestsol,sv.cursol)
                 sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
             end

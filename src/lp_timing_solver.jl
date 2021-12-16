@@ -110,9 +110,9 @@ function solve!(sv::LpTimingSolver, sol::Solution)
         # 4. Extraction des valeurs des variables d'atterrissage
         sv.x = value.(x)
         sv.cost = objective_value(sv.model)
-        sv.costs = [0 for i in 1:n]
+        sv.costs = [0.0 for i in 1:n]
         for i in 1:n
-            sv.costs[i] = get_cost(planes[i],round(Int,value(sv.x[i])))
+            sv.costs[i] = planes[i].ep*value.(x_ep[i]) + planes[i].tp*value.(x_tp[i])
         end
 
         # ATTENTION : les tableaux x et costs sont dans l'ordre de
