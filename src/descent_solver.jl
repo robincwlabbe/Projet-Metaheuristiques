@@ -119,10 +119,11 @@ function finished(sv::DescentSolver)
 end
 
 function solve!(
-    sv::DescentSolver,
+    sv::DescentSolver;
     nb_cons_reject_max::Int = 10000,
     durationmax::Int = 100,
     startsol::Union{Nothing,Solution} = nothing
+
 )
     ln2("BEGIN solve!(DescentSolver)")
     if durationmax != 0
@@ -178,17 +179,6 @@ function solve!(
             if sv.cursol.costs < sv.bestsol.costs # on met à jour la solution si elle est meilleure que la meilleure actuelle
                 copy!(sv.bestsol,sv.cursol)
                 sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
-                msg = string(
-                    "\n     ",
-                    sv.nb_move,
-                    ":",
-                    sv.nb_improve,
-                    "+/",
-                    sv.nb_degrad,
-                    "- cursol=",
-                    to_s(sv.cursol),
-                )
-                print(msg)
             end
         else
             sv.nb_move +=1 
