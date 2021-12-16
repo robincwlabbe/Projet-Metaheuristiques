@@ -87,13 +87,13 @@ function reset!(sv::DescentSolver)
     sv.bestsol.cost = Inf
     sv.testsol.cost = Inf
 
-    this.nb_test = 0
-    this.nb_move = 0
-    this.nb_reject = 0
-    this.nb_cons_reject = 0
-    this.bestiter = 0
-    this.duration = 0.0 # juste pour initialisation
-    this.starttime = 0.0 # juste pour initialisation
+    sv.nb_test = 0
+    sv.nb_move = 0
+    sv.nb_reject = 0
+    sv.nb_cons_reject = 0
+    sv.bestiter = 0
+    sv.duration = 0.0 # juste pour initialisation
+    sv.starttime = 0.0 # juste pour initialisation
 end
 
 # Retourne true ssi l'état justifie l'arrêt de l'algorithme
@@ -121,8 +121,8 @@ end
 function solve!(
     sv::DescentSolver,
     nb_cons_reject_max::Int = 10000,
-    startsol::Union{Nothing,Solution} = nothing,
-    durationmax::Int = 100
+    durationmax::Int = 100,
+    startsol::Union{Nothing,Solution} = nothing
 )
     ln2("BEGIN solve!(DescentSolver)")
     if durationmax != 0
@@ -167,6 +167,7 @@ function solve!(
         # On modifie testsol, puis on teste sa valeur, puis on...
         #
         # ...
+        copy!(sv.testsol,sv.cursol)
         consecutif_swap!(sv.testsol)
 
         if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
