@@ -4,7 +4,7 @@ export to_s, to_s_long
 export get_viol_penality, get_viol_description, is_feasable
 export solve!, disturb!, update_costs!
 export solve_to_earliest!
-export swap!, shift!, permu!, initial_sort!, consecutif_swap!
+export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
 # unexport Random.shuffle!
 # unexport Base.write
@@ -771,6 +771,32 @@ function permu!(sol::Solution, indices1, indices2; do_update = true)
         solve!(sol)
     end
     return indices2
+end
+
+# rand_neighbour! : Permute 2*nb_swap avions dans la solution, avec
+# une distance maximale shift_max (au sens de l'ordre des avions dans
+# la solution courante)
+# do_update : racalcule le coût (true par défaut)
+function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = True)
+    nb = 1
+    swaps = []
+    while nb <= nb_swap
+        i1 = rand(1:length(sol.planes))
+        i2 = i1
+        while i2 == i1
+            i2_min = max(i1 - shift_max, 1)
+            i2_max = min(i1 + shift_max, length(sol.planes))
+            i2 = rand(i2_min:i2_max)
+        end
+        sol.planes[i1], sol.planes[i2] = sol.planes[i2], sol.planes[i1]
+        nb += 1
+        append!(swaps, [i1, i2])
+    end
+
+    if do_update
+        solve!(sol)
+    end
+    return swaps
 end
 
 # Effectue un tri de la solution courante selon le critère passer en paramètre.
