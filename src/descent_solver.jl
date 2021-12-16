@@ -87,13 +87,13 @@ function reset!(sv::DescentSolver)
     sv.bestsol.cost = Inf
     sv.testsol.cost = Inf
 
-    this.nb_test = 0
-    this.nb_move = 0
-    this.nb_reject = 0
-    this.nb_cons_reject = 0
-    this.bestiter = 0
-    this.duration = 0.0 # juste pour initialisation
-    this.starttime = 0.0 # juste pour initialisation
+    sv.nb_test = 0
+    sv.nb_move = 0
+    sv.nb_reject = 0
+    sv.nb_cons_reject = 0
+    sv.bestiter = 0
+    sv.duration = 0.0 # juste pour initialisation
+    sv.starttime = 0.0 # juste pour initialisation
 end
 
 # Retourne true ssi l'état justifie l'arrêt de l'algorithme
@@ -120,9 +120,10 @@ end
 
 function solve!(
     sv::DescentSolver;
-    nb_cons_reject_max::Int = 0,
-    startsol::Union{Nothing,Solution} = nothing,
-    durationmax::Int = 0,
+    nb_cons_reject_max::Int = 10000,
+    durationmax::Int = 100,
+    startsol::Union{Nothing,Solution} = nothing
+
 )
     ln2("BEGIN solve!(DescentSolver)")
     if durationmax != 0
@@ -154,8 +155,7 @@ function solve!(
 
     while !finished(sv)
         sv.nb_test += 1
-
-        error("\n\nMéthode solve!(DescentSolver, ...) non implanté : AU BOULOT :-)\n\n")
+        #error("\n\nMéthode solve!(DescentSolver, ...) non implanté : AU BOULOT :-)\n\n")
 
         # On peut ici tirer aléatoirement des voisinages différents plus ou
         # moins larges (exemple un swap simple ou deux swaps proches, ...)
@@ -168,6 +168,23 @@ function solve!(
         # On modifie testsol, puis on teste sa valeur, puis on...
         #
         # ...
+        copy!(sv.testsol,sv.cursol)
+        consecutif_swap!(sv.testsol)
+
+        if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
+
+            sv.nb_move +=1 # on effectue un deplacement vers un voisin
+            sv.nb_reject = 0 # on remet le nombre de rejets à 0
+            copy!(sv.cursol,sv.testsol) # on se deplace vers le voisin
+            if sv.cursol.costs < sv.bestsol.costs # on met à jour la solution si elle est meilleure que la meilleure actuelle
+                copy!(sv.bestsol,sv.cursol)
+                sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
+            end
+        else
+            sv.nb_move +=1 
+            sv.nb_cons_reject += 1
+            sv.nb_reject += 1
+        end
 
     end # fin while !finished
     ln2("END solve!(DescentSolver)")
@@ -229,3 +246,6 @@ function get_stats(sv::DescentSolver)
 end
 
 # END TYPE DescentSolver
+
+
+

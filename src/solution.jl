@@ -4,7 +4,7 @@ export to_s, to_s_long
 export get_viol_penality, get_viol_description, is_feasable
 export solve!, disturb!, update_costs!
 export solve_to_earliest!
-export swap!, shift!, permu!, initial_sort!, rand_neighbour!
+export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
 # unexport Random.shuffle!
 # unexport Base.write
@@ -890,3 +890,17 @@ function print_sol(sol::Solution, msg::AbstractString = "")
     println(to_s_long(sol))
     println("="^70)
 end
+
+# Fonction qui swap deux avions consecutifs aléatoires
+function consecutif_swap!(sol::Solution)
+    id_1 = rand(1:length(sol.planes))
+    if id_1 == length(sol.planes)
+        id_2 = id_1 - 1
+    elseif id_1 == 1
+        id_2 = id_1 + 1
+    else
+        id_2 = id_1 + rand([-1,1])
+    end
+    swap!(sol,id_1,id_2)
+end
+
