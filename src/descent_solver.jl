@@ -120,12 +120,26 @@ end
 
 function solve!(
     sv::DescentSolver;
+    mode::String = "consecutif_swap",
     nb_cons_reject_max::Int = 1000,
     durationmax::Int = 100,
     startsol::Union{Nothing,Solution} = nothing
 
 )
     ln2("BEGIN solve!(DescentSolver)")
+    println("Mode :", mode)
+
+    if mode == "binomial"
+        voisin! = binomial_swap!
+    elseif mode == "proportional"
+        voisin! = proportional_swap!
+    elseif mode == "rand_neighbour"
+        voisin! = rand_neighbour!
+    elseif mode == "consecutif_swap"
+        voisin! = consecutif_swap!
+    else 
+        voisin! = consecutif_swap!
+    end
     if durationmax != 0
         sv.durationmax = durationmax
     end
@@ -169,7 +183,7 @@ function solve!(
         #
         # ...
         copy!(sv.testsol,sv.cursol)
-        binomial_swap!(sv.testsol,3,0.5)
+        voisin!(sv.testsol)
 
         if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
 

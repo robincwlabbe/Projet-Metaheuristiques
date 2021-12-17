@@ -909,25 +909,25 @@ using Distributions
 using StatsBase
 
 # swap qui privilégie les avions avec le plus gros coûts
-function proportional_swap!(sol::Solution)
+function proportional_swap!(sol::Solution,gap::Int=5)
     id_1 = sample(ProbabilityWeights(sol.costs))
-    if id_1 == length(sol.planes)
-        id_2 = id_1 - 1
-    elseif id_1 == 1
-        id_2 = id_1 + 1
-    else
-        id_2 = id_1 + rand([-2,-1,1,2])
+    move = rand(-gap:gap)
+    id_2 = id_1 + move
+
+    if id_2 <= 0
+        id_2 = id_1 + abs(move)
+    elseif id_2 > sol.inst.nb_planes
+        id_2 = id_1 - abs(move)
     end
     swap!(sol,id_1,id_2)
 end
 
 # swap avec un probabilité binomiale, il y a peut-être une meilleure façon de traiter les bords
-function binomial_swap!(sol::Solution, gap::Int, p::Float64)
+function binomial_swap!(sol::Solution, gap::Int = 4, p::Float64 = 0.5)
     id_1 = rand(1:sol.inst.nb_planes)
     loi = Binomial(gap,p)
-    move = rand([-1,1]) * rand(loi)
+    move = rand(loi)-round(gap*p) # on centre en 0
     id_2 = id_1 + move
-
     if id_2 <= 0
         id_2 = id_1 + abs(move)
     elseif id_2 > sol.inst.nb_planes
@@ -938,14 +938,21 @@ function binomial_swap!(sol::Solution, gap::Int, p::Float64)
 end
 
 
-# mix entre un swap proportionnel et un swap totalement aléatoire
-function randomized_proportional_swap!(sol::Solution,random_rate::Float64 = 0.5)
-    if rand() > random_rate 
-        proportional_swap!(sol)
-    else
-        consecutif_swap!(sol)
+
+# mix entre des petits/larges/multiples swap
+function randomized_small_large_multiple_swap!(sol::Solution,
+    small_rate::Float64=0.4,
+    large_rate::Float64=0.3,
+    small_gap::Int=2,
+    large_gap::Int=5,
+    multiple_gap::Int = 3,
+    multiple_iter::Int = 3)
+    p = rand()
+    if p < small_rate
+        rand_neighbour!(sol,small_gap)
+    elseif p < small_rate + large_rate
+        rand_neighbour!(sol,large_gap)
+    else 
+        rand_neighbour!(sol,multiple_gap,multiple_iter)
     end
 end
-
-
-
