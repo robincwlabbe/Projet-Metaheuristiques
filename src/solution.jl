@@ -6,6 +6,7 @@ export solve!, disturb!, update_costs!
 export solve_to_earliest!
 export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
+export proportional_swap!,randomized_proportional_swap!
 # unexport Random.shuffle!
 # unexport Base.write
 # unexport Base.show
@@ -777,7 +778,7 @@ end
 # une distance maximale shift_max (au sens de l'ordre des avions dans
 # la solution courante)
 # do_update : racalcule le coût (true par défaut)
-function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = True)
+function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = true)
     nb = 1
     swaps = []
     while nb <= nb_swap
@@ -904,3 +905,54 @@ function consecutif_swap!(sol::Solution)
     swap!(sol,id_1,id_2)
 end
 
+using Distributions
+using StatsBase
+
+# swap qui privilégie les avions avec le plus gros coûts
+function proportional_swap!(sol::Solution,gap::Int=5)
+    id_1 = sample(ProbabilityWeights(sol.costs))
+    move = rand(-gap:gap)
+    id_2 = id_1 + move
+
+    if id_2 <= 0
+        id_2 = id_1 + abs(move)
+    elseif id_2 > sol.inst.nb_planes
+        id_2 = id_1 - abs(move)
+    end
+    swap!(sol,id_1,id_2)
+end
+
+# swap avec un probabilité binomiale, il y a peut-être une meilleure façon de traiter les bords
+function binomial_swap!(sol::Solution, gap::Int = 4, p::Float64 = 0.5)
+    id_1 = rand(1:sol.inst.nb_planes)
+    loi = Binomial(gap,p)
+    move = rand(loi)-round(gap*p) # on centre en 0
+    id_2 = id_1 + move
+    if id_2 <= 0
+        id_2 = id_1 + abs(move)
+    elseif id_2 > sol.inst.nb_planes
+        id_2 = id_1 - abs(move)
+    end
+
+    swap!(sol,id_1,id_2)
+end
+
+
+
+# mix entre des petits/larges/multiples swap
+function randomized_small_large_multiple_swap!(sol::Solution,
+    small_rate::Float64=0.4,
+    large_rate::Float64=0.3,
+    small_gap::Int=2,
+    large_gap::Int=5,
+    multiple_gap::Int = 3,
+    multiple_iter::Int = 3)
+    p = rand()
+    if p < small_rate
+        rand_neighbour!(sol,small_gap)
+    elseif p < small_rate + large_rate
+        rand_neighbour!(sol,large_gap)
+    else 
+        rand_neighbour!(sol,multiple_gap,multiple_iter)
+    end
+end
