@@ -6,7 +6,8 @@ export solve!, disturb!, update_costs!
 export solve_to_earliest!
 export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
-export proportional_swap!,randomized_proportional_swap!
+export proportional_swap!,randomized_small_large_multiple_swap!, binomial_swap!
+export bloc_shuffle!
 # unexport Random.shuffle!
 # unexport Base.write
 # unexport Base.show
@@ -926,7 +927,7 @@ end
 function binomial_swap!(sol::Solution, gap::Int = 4, p::Float64 = 0.5)
     id_1 = rand(1:sol.inst.nb_planes)
     loi = Binomial(gap,p)
-    move = rand(loi)-round(gap*p) # on centre en 0
+    move = rand(loi)-round(Int,gap*p) # on centre en 0
     id_2 = id_1 + move
     if id_2 <= 0
         id_2 = id_1 + abs(move)
@@ -937,22 +938,30 @@ function binomial_swap!(sol::Solution, gap::Int = 4, p::Float64 = 0.5)
     swap!(sol,id_1,id_2)
 end
 
+using Random
+# fonction de permutation d'un sous bloc d'avion
+function bloc_shuffle!(sol::Solution,bloc_size::Int = 2)
+    id_1 = rand(1:sol.inst.nb_planes)
+    borne_inf = max(id_1-bloc_size,1)
+    borne_sup = min(id_1+bloc_size,sol.inst.nb_planes)
+    bloc = borne_inf:borne_sup
+    bloc_cible = shuffle(bloc)
+    permu!(sol,bloc,bloc_cible)
+end
 
+# mix entre bloc_shuffle et binomial_swap
 
-# mix entre des petits/larges/multiples swap
-function randomized_small_large_multiple_swap!(sol::Solution,
-    small_rate::Float64=0.4,
-    large_rate::Float64=0.3,
-    small_gap::Int=2,
-    large_gap::Int=5,
-    multiple_gap::Int = 3,
-    multiple_iter::Int = 3)
-    p = rand()
-    if p < small_rate
-        rand_neighbour!(sol,small_gap)
-    elseif p < small_rate + large_rate
-        rand_neighbour!(sol,large_gap)
+# relativement efficace pour les instances 1 à 8
+function mixed_bloc_shuffle_binomial!(sol::Solution,
+    bloc_size::Int = 2,
+    gap_binomial::Int = 4,
+    p_binomial::Float64 = 0.5,
+    shuffle_rate::Float64 = 0.33)
+
+    if rand() < shuffle_rate
+        bloc_shuffle!(sol,bloc_size)
     else 
-        rand_neighbour!(sol,multiple_gap,multiple_iter)
+        binomial_swap!(sol,gap_binomial,p_binomial)
     end
 end
+
