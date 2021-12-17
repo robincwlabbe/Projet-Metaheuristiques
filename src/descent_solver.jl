@@ -127,7 +127,7 @@ function solve!(
 
 )
     ln2("BEGIN solve!(DescentSolver)")
-    println("Mode :", mode)
+    println("Mode : ", mode)
 
     if mode == "binomial"
         voisin! = binomial_swap!
@@ -137,8 +137,12 @@ function solve!(
         voisin! = rand_neighbour!
     elseif mode == "consecutif_swap"
         voisin! = consecutif_swap!
+    elseif mode == "bloc_shuffle"
+        voisin! = bloc_shuffle!
+    elseif mode == "mbsb"
+        voisin! = mixed_bloc_shuffle_binomial!
     else 
-        voisin! = consecutif_swap!
+        voisin! = mixed_bloc_shuffle_binomial!
     end
     if durationmax != 0
         sv.durationmax = durationmax
