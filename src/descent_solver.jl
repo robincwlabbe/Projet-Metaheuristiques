@@ -169,8 +169,7 @@ function solve!(
         println("Début de solve : get_stats(sv)=\n", get_stats(sv))
     end
 
-    ln1("\niter <nb_test> =<nb_move>+<nb_reject> <movedesc> => bestcost=...")
-
+    ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
     while !finished(sv)
         sv.nb_test += 1
         #error("\n\nMéthode solve!(DescentSolver, ...) non implanté : AU BOULOT :-)\n\n")
@@ -188,18 +187,20 @@ function solve!(
         # ...
         copy!(sv.testsol,sv.cursol)
         voisin!(sv.testsol)
-
+        
         if sv.testsol.cost < sv.cursol.cost# s'il y a un gain du coût global
 
             sv.nb_move +=1 # on effectue un deplacement vers un voisin
             sv.nb_cons_reject = 0 # on remet le nombre de rejets à 0
             copy!(sv.cursol,sv.testsol) # on se deplace vers le voisin
             if sv.cursol.cost < sv.bestsol.cost # on met à jour la solution si elle est meilleure que la meilleure actuelle
-                copy!(sv.bestsol,sv.cursol)
-                sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
+                #copy!(sv.bestsol,sv.cursol)
+                #sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
+                println("="^70)
+                record_bestsol(sv)
+                println("\n",to_s(sv.bestsol))
             end
         else
-            sv.nb_move +=1 
             sv.nb_cons_reject += 1
             sv.nb_reject += 1
         end
@@ -234,11 +235,11 @@ function record_bestsol(sv::DescentSolver; movemsg = "")
         write(sv.bestsol)
     end
     if lg3()
-        print("\niter $(rpad(sv.nb_test, 4))=$(sv.nb_move)+$(sv.nb_reject) ")
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
         print("$movemsg ")
         print("bestsol=$(to_s(sv.bestsol))")
     elseif lg1()
-        print("\niter $(rpad(sv.nb_test, 4))=$(sv.nb_move)+$(sv.nb_reject) ")
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
         print("$movemsg => bestcost=", sv.cursol.cost)
     end
 end
