@@ -1,10 +1,12 @@
 # Mode interactif
 
-ag(:infile,p11)
+ag(:infile,p08)
 inst = Instance(ag(:infile))
-sol = Solution(inst)
-sv = DescentSolver(sol.inst)
-solve!(sv,durationmax = 300, nb_cons_reject_max = 10000, mode = "bloc_shuffle")
+#sol = Solution(inst)
+#sv = SteepestSolver(sol.inst)
+svd = SteepestSolver(inst)
+#solve!(svd,durationmax = 15, nb_cons_reject_max = 10000, mode = "bloc_shuffle")
+solve!(svd,durationmax = 15,mode = "A définir")
 
 
 # Mode terminal

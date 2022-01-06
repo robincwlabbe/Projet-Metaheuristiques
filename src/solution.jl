@@ -964,9 +964,3 @@ function mixed_bloc_shuffle_binomial!(sol::Solution,
         binomial_swap!(sol,gap_binomial,p_binomial)
     end
 end
-
-function shuffle_weight_repair(sol::Solution, bloc_size::Int = 2)
-    bloc_shuffle!(sol)
-    proportional_swap!(sol,2)
-    proportional_swap!(sol,2)
-end

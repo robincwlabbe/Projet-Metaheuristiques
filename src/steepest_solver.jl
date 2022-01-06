@@ -1,7 +1,7 @@
 export SteepestSolver
 export finished, solve!, sample_two_shifts
 export record_bestsol, get_stats
-
+export liste_echanges_2_a_2, liste_blocs_permutation
 """
 SteepestSolver
 
@@ -23,6 +23,8 @@ mutable struct SteepestSolver
 
     bestiter::Int
     do_save_bestsol::Bool
+    blocked::Bool         # indique si le voisinage testé n'est pas améliorant
+                          # si vrai on doit s'arrêter
     SteepestSolver() = new() # Constructeur par défaut
 end
 
@@ -54,10 +56,12 @@ function SteepestSolver(inst::Instance; startsol::Union{Nothing,Solution} = noth
             println("this.cursol", to_s(this.cursol))
         end
     end
-
+    Base.sort!(this.cursol.planes, by = p -> p.lb+p.ub)
+    solve!(this.cursol, do_update_cost = true)
     this.bestsol = Solution(this.cursol)
     this.testsol = Solution(this.cursol)
-    this.do_save_bestsol = true
+    this.blocked = false
+    this.do_save_bestsol = false
     return this
 end
 
@@ -66,14 +70,14 @@ end
 function finished(sv::SteepestSolver)
     sv.duration = time_ns() / 1_000_000_000 - sv.starttime
     too_long = sv.duration >= sv.durationmax
-    other = false
+    other = sv.blocked
     stop = too_long || other
     if stop
         if lg1()
             println("\nSTOP car :")
             println("     sv.duration=$(sv.duration)")
             println("     sv.durationmax=$(sv.durationmax)")
-            println("     (à compléter par vos autres critères d'arrêt)")
+            println("     sv.blocked=$(sv.blocked)")
             println(get_stats(sv))
         end
         return true
@@ -85,17 +89,70 @@ end
 function solve!(
     sv::SteepestSolver;
     startsol::Union{Nothing,Solution} = nothing,
-    durationmax::Int = 0,
+    durationmax::Int = 100,
+    permute_type::String = "",
+    break_mode::Bool = false
+
 )
     ln2("BEGIN solve!(SteepestSolver)")
 
     println("\nSteepestSolver:solve : ")
-    println("   à compléter en s'inspirant de descentsolver")
-    println("   AU BOULOT ! ")
-    exit(1)
+    println("\nMode : ", mode)
+    if durationmax != 0
+        sv.durationmax = durationmax
+    end
+    if startsol != nothing
+        sv.cursol = startsol
+        copy!(sv.bestsol, sv.cursol) # on réinitialise bestsol à cursol
+        copy!(sv.testsol, sv.cursol)
+        if lg2()
+            println("Dans SteepestSolver : sv.cursol = sv.opts[:startsol] ")
+            println("sv.cursol : ", to_s(sv.cursol))
+        end
+    else
+        # on garde la dernière solution sv.cursol
+    end
+    sv.starttime = time_ns() / 1_000_000_000
+    
+    if lg3()
+        println("Début de solve : get_stats(sv)=\n", get_stats(sv))
+    end
+
+    ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
+    n = sv.inst.nb_planes
 
     while !finished(sv)
+
         sv.nb_test += 1
+        copy!(sv.testsol,sv.bestsol)
+        permutations = liste_blocs_permutation(n,4)
+        
+        # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
+        permutations = Random.shuffle!(permutations) 
+        # Parcours du voisinage
+        for permutation in permutations
+            permu!(sv.testsol,permutation[1],permutation[2])
+            if sv.testsol.cost <= sv.cursol.cost
+                println(sv.testsol.cost)
+                copy!(sv.cursol,sv.testsol)
+                sv.nb_test += 1
+                if break_mode
+                    break # on change de voisinage dès qu'on améliore la solution
+                    println("\nChangement de voisinage\n")
+                end
+            end
+        end
+        
+        # On met à jour si nécessaire
+        if sv.cursol.cost <= sv.bestsol.cost
+            copy!(sv.bestsol,sv.cursol)
+            sv.nb_move += 1
+
+        # Sinon c'est qu'on est bloqué dans un optimum (local ou global)
+        else 
+            sv.blocked = true
+        end
+
     end # fin while !finished
 
     ln2("END solve!(SteepestSolver)")
@@ -103,13 +160,65 @@ end
 
 function record_bestsol(sv::SteepestSolver; movemsg = "")
     copy!(sv.bestsol, sv.cursol)
-    println("À COMPLÉTER POUR SEQATA !")
+    sv.bestiter = sv.nb_test
+    if lg3()
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
+        print("$movemsg ")
+        print("bestsol=$(to_s(sv.bestsol))")
+    elseif lg1()
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
+        print("$movemsg => bestcost=", sv.cursol.cost)
+    end
+    #println("À COMPLÉTER POUR SEQATA !")
 end
+
 function get_stats(sv::SteepestSolver)
     txt = """
     ==Etat de l'objet SteepestSolver==
-    (à compléter !)
+    sv.nb_test=$(sv.nb_test)
+    sv.nb_move=$(sv.nb_move)
+    sv.blocked=$(sv.blocked)
+    sv.duration=$(sv.duration)
+    sv.durationmax=$(sv.durationmax)
+
+    sv.testsol.cost=$(sv.testsol.cost)
+    sv.cursol.cost=$(sv.cursol.cost)
+    sv.bestsol.cost=$(sv.bestsol.cost)
+    sv.bestiter=$(sv.bestiter)
+    sv.testsol.solver.nb_infeasable=$(sv.testsol.solver.nb_infeasable)
     """
+    txt = replace(txt, r"^ {4}" => "")
 end
 
 # END TYPE SteepestSolver
+
+
+# Fonctions liées à la génération de voisinage
+using Combinatorics # package de combinatoire
+
+# On représente une permutation par deux listes contenant les indices permutés et leur position image
+
+# Fonction renvoyant les permutations d'éléments 2 à 2 à un certaine distance
+function liste_echanges_2_a_2(n::Int,shift::Int=1)
+    i_max = n-shift
+    echanges = [[[i,i+shift],[i+shift,i]] for i in 1:i_max]
+    return(echanges)
+end
+
+# Fonction renvoyant toutes les permutations par blocs de taille bloc_size
+# L'idée est d'améliorer la solution en ne touchant qu'à un partie de la liste des avions
+function liste_blocs_permutation(n::Int,bloc_size::Int = 3)
+    i_max = n-bloc_size
+    echanges = []
+    blocs_permutations = [collect(permutations(collect(i:i+bloc_size))) for i in 1:i_max]
+    for blocs in 1:i_max
+        idx_1 = blocs_permutations[blocs][1]
+        for idx_2 in blocs_permutations[blocs][2:end]
+            append!(echanges,[[idx_1,idx_2]])
+        end
+    end
+    return(echanges)
+end
+
+    
+
