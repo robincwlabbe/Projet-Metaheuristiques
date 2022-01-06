@@ -77,7 +77,7 @@ function DescentSolver(inst::Instance; startsol::Union{Nothing,Solution} = nothi
 
     this.bestsol = Solution(this.cursol)
     this.testsol = Solution(this.cursol)
-    this.do_save_bestsol = true
+    this.do_save_bestsol = false
     return this
 end
 
@@ -194,8 +194,6 @@ function solve!(
             sv.nb_cons_reject = 0 # on remet le nombre de rejets à 0
             copy!(sv.cursol,sv.testsol) # on se deplace vers le voisin
             if sv.cursol.cost < sv.bestsol.cost # on met à jour la solution si elle est meilleure que la meilleure actuelle
-                #copy!(sv.bestsol,sv.cursol)
-                #sv.bestiter = sv.nb_test # on met à jour le numéro de la meilleure itération
                 println("="^70)
                 record_bestsol(sv)
                 println("\n",to_s(sv.bestsol))
