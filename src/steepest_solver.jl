@@ -2,6 +2,7 @@ export SteepestSolver
 export finished, solve!, sample_two_shifts
 export record_bestsol, get_stats
 export liste_echanges_2_a_2, liste_blocs_permutation
+using Random
 """
 SteepestSolver
 
@@ -56,8 +57,6 @@ function SteepestSolver(inst::Instance; startsol::Union{Nothing,Solution} = noth
             println("this.cursol", to_s(this.cursol))
         end
     end
-    Base.sort!(this.cursol.planes, by = p -> p.lb+p.ub)
-    solve!(this.cursol, do_update_cost = true)
     this.bestsol = Solution(this.cursol)
     this.testsol = Solution(this.cursol)
     this.blocked = false
@@ -95,9 +94,7 @@ function solve!(
 
 )
     ln2("BEGIN solve!(SteepestSolver)")
-
-    println("\nSteepestSolver:solve : ")
-    println("\nMode : ", mode)
+    println("\nBreak mode : ", break_mode)
     if durationmax != 0
         sv.durationmax = durationmax
     end
@@ -128,21 +125,23 @@ function solve!(
         permutations = liste_blocs_permutation(n,4)
         
         # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
-        permutations = Random.shuffle!(permutations) 
+        #Random.shuffle!(permutations) 
         # Parcours du voisinage
         for permutation in permutations
+            
             permu!(sv.testsol,permutation[1],permutation[2])
             if sv.testsol.cost <= sv.cursol.cost
-                println(sv.testsol.cost)
+                
                 copy!(sv.cursol,sv.testsol)
-                sv.nb_test += 1
-                if break_mode
+                
+                if sv.testsol.cost < sv.cursol.cost
                     break # on change de voisinage dès qu'on améliore la solution
-                    println("\nChangement de voisinage\n")
                 end
             end
         end
-        
+        println("\nChangement de voisinage")
+        println("\nNombre d'iterations : ", sv.nb_test)
+        println("\nCoût de la meilleure solution : ", sv.cursol.cost)
         # On met à jour si nécessaire
         if sv.cursol.cost <= sv.bestsol.cost
             copy!(sv.bestsol,sv.cursol)
@@ -156,6 +155,8 @@ function solve!(
     end # fin while !finished
 
     ln2("END solve!(SteepestSolver)")
+    println("="^70)
+    println("\n",to_s(sv.bestsol))
 end
 
 function record_bestsol(sv::SteepestSolver; movemsg = "")
