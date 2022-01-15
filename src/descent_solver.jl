@@ -120,29 +120,30 @@ end
 
 function solve!(
     sv::DescentSolver;
-    mode::String = "consecutif_swap",
     nb_cons_reject_max::Int = 1000,
     durationmax::Int = 100,
     startsol::Union{Nothing,Solution} = nothing
 
 )
     ln2("BEGIN solve!(DescentSolver)")
-    println("Mode : ", mode)
-
-    if mode == "binomial"
+    
+    mode = Args.get("nbh")
+    if mode == :binomial
         voisin! = binomial_swap!
-    elseif mode == "proportional"
+    elseif mode == :shift
+        voisin! = random_shifter!
+    elseif mode == :proportional
         voisin! = proportional_swap!
-    elseif mode == "rand_neighbour"
-        voisin! = rand_neighbour!
-    elseif mode == "consecutif_swap"
-        voisin! = consecutif_swap!
-    elseif mode == "bloc_shuffle"
+    elseif mode == :swap
+        voisin! = random_swaper!
+    elseif mode == :bloc_shuffle
         voisin! = bloc_shuffle!
-    elseif mode == "mbsb"
+    elseif mode == :mbsb
         voisin! = mixed_bloc_shuffle_binomial!
+    elseif mode == :swap_and_shift
+        voisin! = swap_and_shift!
     else 
-        voisin! = mixed_bloc_shuffle_binomial!
+        voisin! = swap_and_shift!
     end
     if durationmax != 0
         sv.durationmax = durationmax

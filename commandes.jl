@@ -2,11 +2,12 @@
 
 
 
-ag(:infile,p11)
+ag(:infile,p09)
 inst = Instance(ag(:infile))
+ag(:nbh,:swap_and_shift)
 ag(:presort,:target)
 svd = DescentSolver(inst)
-solve!(svd,mode = "shift")
+solve!(svd, nb_cons_reject_max=10000, durationmax = 300)
 
 
 # Mode terminal
