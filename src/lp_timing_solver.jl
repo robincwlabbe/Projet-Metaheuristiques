@@ -93,7 +93,15 @@ function solve!(sv::LpTimingSolver, sol::Solution)
     @constraint(sv.model, [i in 1:n], x_tp[i] >= -(planes[i].target - x[i])) 
 
     # Il faut également respecter les délais entre deux arrivées successives
-    @constraint(sv.model, [i in 1:n,j in 1:n; i<j], x[j] >= x[i] + get_sep(sol.inst, planes[i],planes[j]))
+    
+    # S = [get_sep(sol.inst, planes[i],planes[j]) for i in 1:n, j in 1:n]
+    # Smax = maximum(S)
+    # a compléter pour avoir exactement les bonnes contraintes
+
+    @constraint(sv.model, [i in 1:n-1], x[i+1] >= x[i] + get_sep(sol.inst, planes[i],planes[i+1]))
+
+    # Si l'inégalité triangulaire n'est pas vérifié
+    #@constraint(sv.model, [i in 1:n,j in 1:n; i<j], x[j] >= x[i] + get_sep(sol.inst, planes[i],planes[j]))
 
     # Objectif
     @objective(sv.model, Min ,sum(planes[i].ep * x_ep[i] + planes[i].tp * x_tp[i] for i in 1:n))
