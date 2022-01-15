@@ -1,11 +1,12 @@
 # Mode interactif
 
 
-ag(:presort,:shuffle)
-ag(:infile,p02)
+
+ag(:infile,p11)
 inst = Instance(ag(:infile))
-svd = SteepestSolver(inst)
-solve!(svd,durationmax = 5)
+ag(:presort,:target)
+svd = DescentSolver(inst)
+solve!(svd,mode = "shift")
 
 
 # Mode terminal
