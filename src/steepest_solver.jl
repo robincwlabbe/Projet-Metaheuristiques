@@ -125,7 +125,7 @@ function solve!(
         permutations = liste_blocs_permutation(n,4)
         
         # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
-        #Random.shuffle!(permutations) 
+        # Random.shuffle!(permutations) 
         # Parcours du voisinage
         for permutation in permutations
             
