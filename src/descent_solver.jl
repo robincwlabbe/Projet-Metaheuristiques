@@ -128,9 +128,11 @@ function solve!(
 )
     ln2("BEGIN solve!(DescentSolver)")
     println("Mode : ", mode)
-
+      
     if mode == "binomial"
         voisin! = binomial_swap!
+    elseif mode == "shift"
+        voisin! = random_shifter!
     elseif mode == "proportional"
         voisin! = proportional_swap!
     elseif mode == "rand_neighbour"

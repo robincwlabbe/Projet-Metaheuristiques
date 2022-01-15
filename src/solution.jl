@@ -6,7 +6,7 @@ export solve!, disturb!, update_costs!
 export solve_to_earliest!
 export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
 export guess_solname, print_sol
-export proportional_swap!,randomized_small_large_multiple_swap!, binomial_swap!
+export proportional_swap!,randomized_small_large_multiple_swap!, binomial_swap!, random_shifter!
 export bloc_shuffle!
 # unexport Random.shuffle!
 # unexport Base.write
@@ -760,7 +760,7 @@ end
 #
 # Pour cela l'appel doit être d ela forme :
 #  mysol.permu! [1, 6, 7], [7, 1, 6]
-#
+#  
 # do_update : racalcule le coût (true par défaut)
 #
 # HYPOTHESE :
@@ -962,5 +962,16 @@ function mixed_bloc_shuffle_binomial!(sol::Solution,
         bloc_shuffle!(sol,bloc_size)
     else 
         binomial_swap!(sol,gap_binomial,p_binomial)
+    end
+end
+
+function random_shifter!(sol::Solution,
+    shift_max_size::Int = 3,
+    shift_number::Int = 2)
+    n = sol.inst.nb_planes
+    for i in 1:shift_number
+        idx_1 = rand(1:n)
+        idx_2 = rand(max(1,idx_1-shift_max_size):min(n,idx_1+shift_max_size))
+        shift!(sol,idx_1,idx_2)
     end
 end
