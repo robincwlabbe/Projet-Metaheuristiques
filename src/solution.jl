@@ -4,10 +4,10 @@ export to_s, to_s_long
 export get_viol_penality, get_viol_description, is_feasable
 export solve!, disturb!, update_costs!
 export solve_to_earliest!
-export swap!, shift!, permu!, initial_sort!, consecutif_swap!, rand_neighbour!
+export swap!, shift!, permu!, initial_sort!, consecutif_swap!
 export guess_solname, print_sol
-export proportional_swap!,randomized_small_large_multiple_swap!, binomial_swap!, random_shifter!
-export bloc_shuffle!
+export proportional_swap!, binomial_swap!, random_shifter!
+export bloc_shuffle!, random_shifter!, random_swaper!, swap_and_shift!
 # unexport Random.shuffle!
 # unexport Base.write
 # unexport Base.show
@@ -775,37 +775,12 @@ function permu!(sol::Solution, indices1, indices2; do_update = true)
     return indices2
 end
 
-# rand_neighbour! : Permute 2*nb_swap avions dans la solution, avec
-# une distance maximale shift_max (au sens de l'ordre des avions dans
-# la solution courante)
-# do_update : racalcule le coût (true par défaut)
-function rand_neighbour!(sol::Solution, shift_max::Int = 1, nb_swap::Int = 1, do_update = true)
-    nb = 1
-    swaps = []
-    while nb <= nb_swap
-        i1 = rand(1:length(sol.planes))
-        i2 = i1
-        while i2 == i1
-            i2_min = max(i1 - shift_max, 1)
-            i2_max = min(i1 + shift_max, length(sol.planes))
-            i2 = rand(i2_min:i2_max)
-        end
-        sol.planes[i1], sol.planes[i2] = sol.planes[i2], sol.planes[i1]
-        nb += 1
-        append!(swaps, [i1, i2])
-    end
-
-    if do_update
-        solve!(sol)
-    end
-    return swaps
-end
 
 # Effectue un tri de la solution courante selon le critère passer en paramètre.
 # Si aucun critère presort n'est imposé en argumant, celui spécifié par
 # l'option --presort est utilisé
 # Le timing de la solution estmis à jour.
-#
+
 function initial_sort!(sol::Solution; presort = :ARGS)
 
     # On part de l'instance en triant les avions par ordre de lb croissant
@@ -830,6 +805,8 @@ function initial_sort!(sol::Solution; presort = :ARGS)
         Base.sort!(sol.planes, by = p -> p.ub)
     elseif presort == :rub
         Base.sort!(sol.planes, by = p -> p.ub, rev = true)
+    elseif presort == :mb
+        Base.sort!(sol.planes, by = p -> p.ub+p.lb)
     elseif presort == :shuffle
         # Base.shuffle!(sol.planes)
         Random.shuffle!(sol.planes)
@@ -934,7 +911,6 @@ function binomial_swap!(sol::Solution, gap::Int = 4, p::Float64 = 0.5)
     elseif id_2 > sol.inst.nb_planes
         id_2 = id_1 - abs(move)
     end
-
     swap!(sol,id_1,id_2)
 end
 
@@ -965,13 +941,47 @@ function mixed_bloc_shuffle_binomial!(sol::Solution,
     end
 end
 
+# shift aléatoire
 function random_shifter!(sol::Solution,
-    shift_max_size::Int = 3,
-    shift_number::Int = 2)
+    shift_max_size::Int = 2,
+    shift_number::Int = 1,
+    update::Bool = true)
     n = sol.inst.nb_planes
     for i in 1:shift_number
         idx_1 = rand(1:n)
-        idx_2 = rand(max(1,idx_1-shift_max_size):min(n,idx_1+shift_max_size))
-        shift!(sol,idx_1,idx_2)
+        idx_2 = rand(max(1, idx_1 - shift_max_size):min(n, idx_1 + shift_max_size))
+        shift!(sol, idx_1, idx_2,do_update=update & i==shift_number)
+    end
+end
+
+# swap aléatoire
+function random_swaper!(sol::Solution,
+    swap_max_size::Int = 2,
+    swap_number::Int = 1,
+    update::Bool = true)
+    n = sol.inst.nb_planes
+    for i in 1:swap_number
+        idx_1 = rand(1:n)
+        idx_2 = rand(max(1, idx_1 - swap_max_size):min(n, idx_1 + swap_max_size))
+        swap!(sol, idx_1, idx_2,do_update=update & i==swap_number)
+    end
+end
+
+
+# mix entre shift et swap et potentiel combinaison de shift et de swap
+function swap_and_shift!(sol::Solution)
+    p = rand()
+
+    if p<0.2
+        random_swaper!(sol, 3, 1)
+    elseif p<0.4
+        random_shifter!(sol, 3, 1)
+    elseif p<0.6
+        random_shifter!(sol, 2, 1, false)
+        random_swaper!(sol, 2, 1)
+    elseif p<0.8
+        random_swaper!(sol, 2, 2)
+    else
+        random_shifter!(sol, 2, 2)
     end
 end
