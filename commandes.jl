@@ -2,7 +2,7 @@
 
 
 
-ag(:infile,p09)
+ag(:infile,p12)
 inst = Instance(ag(:infile))
 ag(:nbh,:swap_and_shift)
 ag(:presort,:target)
