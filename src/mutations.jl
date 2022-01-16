@@ -12,7 +12,8 @@ mutable struct Mutation
                 # par exemple si elle l'est pas Construction
 
 
-    function Mutation(idx_1::Vector{Int}, idx_2::Vector{Int}, clean::Bool = false)
+    function Mutation(nb_planes::Int, idx_1::Vector{Int},
+        idx_2::Vector{Int}, clean::Bool = false)
         this = new()
 
         # Il faut veiller à supprimer les points fixes
@@ -20,7 +21,7 @@ mutable struct Mutation
         this.clean = false
         this.idx_1 = idx_1
         this.idx_2 = idx_2
-        this.nb_planes = length(idx_1)
+        this.nb_planes = nb_planes
         return this
     end
 
@@ -82,4 +83,27 @@ end
 
 function shuffle!(voisinage::Voisinage)
     # mélange un voisinage
+end
+
+function swap_vois(nb_planes::Int, dist::Int)
+    # dist est la "distance" dans l'ordre des avions de la solution actuelle
+    # selon laquelle on effectue les swaps. Preferablement, on garde une petite distance
+    muts = Mutation[]
+    for i in 1:nb_planes-dist
+        push!(muts, Mutation(nb_planes, [i,i+dist], [i+dist, i]))
+    end
+    return Voisinage(muts)
+end
+
+function shift_vois(nb_planes::Int, dist::Int)
+    muts = Mutation[]
+    for i in 1:nb_planes-dist
+        # left to right
+        push!(muts, Mutation(nb_planes, collect(i:(i+dist)),
+            append!(collect((i+1):(i+dist)),i)))
+        # right to left
+        push!(muts, Mutation(nb_planes, collect(i:(i+dist)),
+            append!(Int64[i+dist], collect((i):(i+dist-1)))))
+    end
+    return Voisinage(muts)
 end
