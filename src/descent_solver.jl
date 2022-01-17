@@ -205,6 +205,8 @@ function solve!(
         end
 
     end # fin while !finished
+    sv.do_save_bestsol = true
+    record_bestsol(sv)
     ln2("END solve!(DescentSolver)")
 end
 

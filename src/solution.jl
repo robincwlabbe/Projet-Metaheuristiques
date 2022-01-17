@@ -970,18 +970,18 @@ end
 
 # mix entre shift et swap et potentiel combinaison de shift et de swap
 function swap_and_shift!(sol::Solution)
-    p = rand()
+    p = rand() # tirage au sort
 
     if p<0.2
-        random_swaper!(sol, 3, 1)
+        random_swaper!(sol, 3, 1) # Un swap à une distance maximal de 3
     elseif p<0.4
-        random_shifter!(sol, 3, 1)
+        random_shifter!(sol, 3, 1)  # Un shift à une distance maximal de 3
     elseif p<0.6
-        random_shifter!(sol, 2, 1, false)
-        random_swaper!(sol, 2, 1)
+        random_shifter!(sol, 2, 1, false) # false : on ne résoud pas inutilement le problème
+        random_swaper!(sol, 2, 1) # Un shift puis un swap à une distance maximal de 2 chacun
     elseif p<0.8
-        random_swaper!(sol, 2, 2)
+        random_swaper!(sol, 2, 2) # 2 swaps à une distance maximal de 2
     else
-        random_shifter!(sol, 2, 2)
+        random_shifter!(sol, 2, 2) # 2 shifts à une distance maximal de 2
     end
 end
