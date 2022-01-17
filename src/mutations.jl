@@ -1,5 +1,8 @@
 using Combinatorics
 export Mutation
+export Voisinage
+export swap_vois
+export shift_vois
 
 # Mutations
 
@@ -12,7 +15,8 @@ mutable struct Mutation
                 # par exemple si elle l'est pas Construction
 
 
-    function Mutation(idx_1::Vector{Int}, idx_2::Vector{Int}, clean::Bool = false)
+    function Mutation(nb_planes::Int, idx_1::Vector{Int},
+        idx_2::Vector{Int}, clean::Bool = false)
         this = new()
 
         # Il faut veiller à supprimer les points fixes
@@ -20,7 +24,7 @@ mutable struct Mutation
         this.clean = false
         this.idx_1 = idx_1
         this.idx_2 = idx_2
-        this.nb_planes = length(idx_1)
+        this.nb_planes = nb_planes
         return this
     end
 
@@ -66,11 +70,13 @@ mutable struct Voisinage
     function Voisinage(voisins::Vector{Mutation})
         this = new()
         this.voisins = voisins
+        return this
     end
 
     function Voisinage(vois::Voisinage)
         this = new()
         this.voisins = copy(vois.voisins)
+        return this
     end
 end
 
@@ -82,4 +88,41 @@ end
 
 function shuffle!(voisinage::Voisinage)
     # mélange un voisinage
+end
+
+function fusion(vois1::Voisinage, vois2::Voisinage)
+    # condition pour fusionner les voisinages :
+    # - meme nb_planes
+    if vois1[1].nb_planes != vois2[1].nb_planes
+        throw(DomainError(vois2[1], "nb_planes must be identical in each neighbourhoods"))
+    end
+
+    return Voisinage([vois1; vois2])
+end
+
+
+function swap_vois(nb_planes::Int, dist::Int)
+    # dist est la "distance" dans l'ordre des avions de la solution actuelle
+    # selon laquelle on effectue les swaps. Preferablement, on garde une petite distance
+    muts = Mutation[]
+    for i in 1:nb_planes-dist
+        push!(muts, Mutation(nb_planes, [i,i+dist], [i+dist, i]))
+    end
+    return Voisinage(muts)
+end
+
+
+function shift_vois(nb_planes::Int, dist::Int)
+    # si dist = 1, meme chose que swap_vois(dist=1)
+    # on prend dist >= 2
+    muts = Mutation[]
+    for i in 1:nb_planes-dist
+        # left to right
+        push!(muts, Mutation(nb_planes, collect(i:(i+dist)),
+            append!(collect((i+1):(i+dist)),i)))
+        # right to left
+        push!(muts, Mutation(nb_planes, collect(i:(i+dist)),
+            append!(Int64[i+dist], collect((i):(i+dist-1)))))
+    end
+    return Voisinage(muts)
 end
