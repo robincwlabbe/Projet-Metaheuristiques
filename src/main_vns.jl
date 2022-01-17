@@ -1,4 +1,5 @@
 @ms include("vns_solver.jl")
+@ms include("mutations.jl")
 
 export main_vns
 
