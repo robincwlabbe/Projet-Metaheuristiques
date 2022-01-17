@@ -1,5 +1,8 @@
 using Combinatorics
 export Mutation
+export Voisinage
+export swap_vois
+export shift_vois
 
 # Mutations
 
@@ -67,11 +70,13 @@ mutable struct Voisinage
     function Voisinage(voisins::Vector{Mutation})
         this = new()
         this.voisins = voisins
+        return this
     end
 
     function Voisinage(vois::Voisinage)
         this = new()
         this.voisins = copy(vois.voisins)
+        return this
     end
 end
 
@@ -85,6 +90,17 @@ function shuffle!(voisinage::Voisinage)
     # mélange un voisinage
 end
 
+function fusion(vois1::Voisinage, vois2::Voisinage)
+    # condition pour fusionner les voisinages :
+    # - meme nb_planes
+    if vois1[1].nb_planes != vois2[1].nb_planes
+        throw(DomainError(vois2[1], "nb_planes must be identical in each neighbourhoods"))
+    end
+
+    return Voisinage([vois1; vois2])
+end
+
+
 function swap_vois(nb_planes::Int, dist::Int)
     # dist est la "distance" dans l'ordre des avions de la solution actuelle
     # selon laquelle on effectue les swaps. Preferablement, on garde une petite distance
@@ -95,7 +111,10 @@ function swap_vois(nb_planes::Int, dist::Int)
     return Voisinage(muts)
 end
 
+
 function shift_vois(nb_planes::Int, dist::Int)
+    # si dist = 1, meme chose que swap_vois(dist=1)
+    # on prend dist >= 2
     muts = Mutation[]
     for i in 1:nb_planes-dist
         # left to right
