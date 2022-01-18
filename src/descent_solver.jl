@@ -127,6 +127,7 @@ function solve!(
 )
     ln2("BEGIN solve!(DescentSolver)")
     
+    # Choix du mode via :nbh
     mode = Args.get("nbh")
     if mode == :binomial
         voisin! = binomial_swap!
@@ -171,6 +172,7 @@ function solve!(
     end
 
     ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
+    
     while !finished(sv)
         sv.nb_test += 1
         #error("\n\nMéthode solve!(DescentSolver, ...) non implanté : AU BOULOT :-)\n\n")

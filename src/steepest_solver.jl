@@ -40,7 +40,6 @@ function SteepestSolver(inst::Instance; startsol::Union{Nothing,Solution} = noth
     this.durationmax = 366 * 24 * 3600 # 1 année par défaut !
     this.duration = 0.0 # juste pour initialisation
     this.starttime = 0.0 # juste pour initialisation
-
     if startsol == nothing
         # Pas de solution initiale => on en crée une
         this.cursol = Solution(inst)
@@ -90,11 +89,9 @@ function solve!(
     startsol::Union{Nothing,Solution} = nothing,
     durationmax::Int = 100,
     permute_type::String = "",
-    break_mode::Bool = false
-
 )
+
     ln2("BEGIN solve!(SteepestSolver)")
-    println("\nBreak mode : ", break_mode)
     if durationmax != 0
         sv.durationmax = durationmax
     end
@@ -111,27 +108,46 @@ function solve!(
     end
     sv.starttime = time_ns() / 1_000_000_000
     
+    # First best move 
+    mode = Args.get("move_to_first_best")
+    if mode==:false
+        first_best = false
+    else
+        first_best = true
+    end
+
     if lg3()
         println("Début de solve : get_stats(sv)=\n", get_stats(sv))
     end
 
-    ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
+    #ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
     n = sv.inst.nb_planes
 
-    permutations = liste_blocs_permutation(n,4)
+    # Création du voisinage
+    voisinage = merge(swap_vois(n,1),swap_vois(n,2))
+    voisinage = merge(voisinage,shift_vois(n,2))
+    voisinage = merge(voisinage,swap_vois(n,3))
+
+    # voisinage = merge(voisinage,compose_vois(swap_vois(n,1),swap_vois(n,1)))
+    # voisinage = merge(voisinage,compose_vois(swap_vois(n,1),shift_vois(n,2)))
+
+    shuffle!(voisinage)
+
     while !finished(sv)
 
         sv.nb_test += 1
-        
-        
         # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
         # Random.shuffle!(permutations) 
         # Parcours du voisinage
-        for permutation in permutations
+        
+        for mut in voisinage.voisins
             copy!(sv.testsol,sv.bestsol)
-            permu!(sv.testsol,permutation[1],permutation[2])
-            if sv.testsol.cost <= sv.cursol.cost
+            permu!(sv.testsol,mut.idx_1,mut.idx_2)
+            if sv.testsol.cost < sv.bestsol.cost
                 copy!(sv.cursol,sv.testsol)
+                if first_best
+                    break
+                end
             end
         end
 

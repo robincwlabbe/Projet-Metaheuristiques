@@ -1,5 +1,6 @@
 @ms include("steepest_solver.jl")
-
+@ms include("mutations.jl")
+using Random
 export main_steepest
 
 """
