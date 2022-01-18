@@ -51,9 +51,9 @@ function clean!(mut::Mutation)
         end
     end
 
-    # suppression des dpoints fixes
-    splice!(mut.idx_1,indices)
-    splice!(mut.idx_2,indices)
+    # suppression des points fixes
+    deleteat!(mut.idx_1,indices)
+    deleteat!(mut.idx_2,indices)
     
     # tri de la permutation par idx1 croissant (pour éviter les doublons dans Voisinage)
     order = sortperm(mut.idx_1)
@@ -73,9 +73,10 @@ end
 # Voisinages
 
 mutable struct Voisinage
+    nb_planes::Int
     voisins::Vector{Mutation}
     clean::Bool
-    nb_planes::Int
+    
     function Voisinage(voisins::Vector{Mutation})
         this = new()
         this.voisins = voisins
@@ -100,19 +101,30 @@ function clean!(voisinage::Voisinage)
             clean!(mut)
         end
     end
-    indices = []
+
+    indices_empty = []
     n = length(voisinage.voisins)
 
+    for i in 1:n
+        if isempty(voisinage.voisins[i].idx_1)
+            push!(indices_empty,i)
+        end
+    end
+
+    deleteat!(voisinage.voisins,indices_empty)
+    n = length(voisinage.voisins)
     # pas très efficace mais bon...
+    indices = []
     for i in 1:n
         for j in i+1:n
-            if voisinage.voisins[i] == voisinage.voisins[j]
+            if voisinage.voisins[i].idx_2 == voisinage.voisins[j].idx_2
                 push!(indices,j)
             end
         end
     end
+
     indices = sort!(unique(indices))
-    splice!(voisinage.voisins,indices)
+    deleteat!(voisinage.voisins,indices)
     voisinage.clean = true
 end
 
@@ -173,21 +185,12 @@ function compose_vois(vois1::Voisinage,vois2::Voisinage)
             idx_new = collect(1:n)
             idx_new[mut1.idx_1] = idx_new[mut1.idx_2]
             idx_new[mut2.idx_1] = idx_new[mut2.idx_2]
-            push!(muts,Mutation(n,idx_base,idx_new))
+            push!(muts,Mutation(n,copy(idx_base),idx_new))
         end
     end
 
     composed = Voisinage(muts)
-    println(composed)
     clean!(composed) 
 
     return composed
 end
-
-            
-            
-            
-
-
-
-
