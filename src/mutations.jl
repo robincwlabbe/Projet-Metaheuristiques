@@ -1,8 +1,10 @@
 using Combinatorics
+using Random
 export Mutation
 export Voisinage
 export swap_vois
 export shift_vois
+
 
 # Mutations
 
@@ -41,16 +43,22 @@ end
 
 
 # supprime les points fixes d'une mutation
-function clear!(mut::Mutation)
+function clean!(mut::Mutation)
     indices = []
-    for i in 1:mut.nb_planes
+    for i in 1:length(mut.idx_1)
         if mut.idx_1[i]==mut.idx_2[i]
             append!(indices,i)
         end
     end
-    splice!(mut.idx_1,indices)
-    splice!(mut.idx_2,indices)
-    mut.nb_planes = length(mut.idx_1)
+
+    # suppression des points fixes
+    deleteat!(mut.idx_1,indices)
+    deleteat!(mut.idx_2,indices)
+    
+    # tri de la permutation par idx1 croissant (pour éviter les doublons dans Voisinage)
+    order = sortperm(mut.idx_1)
+    mut.idx_1 = mut.idx_1[order]
+    mut.idx_2 = mut.idx_2[order]
     mut.clean = true
 end
 
@@ -65,30 +73,68 @@ end
 # Voisinages
 
 mutable struct Voisinage
+    nb_planes::Int
     voisins::Vector{Mutation}
-
+    clean::Bool
+    
     function Voisinage(voisins::Vector{Mutation})
         this = new()
         this.voisins = voisins
+        this.nb_planes = voisins[1].nb_planes
         return this
     end
 
     function Voisinage(vois::Voisinage)
         this = new()
         this.voisins = copy(vois.voisins)
+        this.nn_planes = copy(vois.nb_planes)
+        this.clean = copy(vois.clean)
         return this
     end
 end
 
-function clear!(voisinage::Voisinage)
-    # supprime les doublons dans le voisinage
-    # éventuellement vérifie que chaque mutations du voisinage est clean
-    # si une solution n'est pas clean on la nettoie
+# supprime les doublons d'un voisinage après avoir clean tous ses voisins
+function clean!(voisinage::Voisinage)
+
+    for mut in voisinage.voisins
+        if !mut.clean
+            clean!(mut)
+        end
+    end
+
+    indices_empty = []
+    n = length(voisinage.voisins)
+
+    for i in 1:n
+        if isempty(voisinage.voisins[i].idx_1)
+            push!(indices_empty,i)
+        end
+    end
+
+    deleteat!(voisinage.voisins,indices_empty)
+    n = length(voisinage.voisins)
+    # pas très efficace mais bon...
+    indices = []
+    for i in 1:n
+        for j in i+1:n
+            if voisinage.voisins[i].idx_2 == voisinage.voisins[j].idx_2
+                push!(indices,j)
+            end
+        end
+    end
+
+    indices = sort!(unique(indices))
+    deleteat!(voisinage.voisins,indices)
+    voisinage.clean = true
 end
 
+using Random
 function shuffle!(voisinage::Voisinage)
     # mélange un voisinage
+    # utile si on utilise first break dans SteepestSolver
+    Random.shuffle!(voisinage.voisins)
 end
+
 
 function fusion(vois1::Voisinage, vois2::Voisinage)
     # condition pour fusionner les voisinages :
@@ -125,4 +171,26 @@ function shift_vois(nb_planes::Int, dist::Int)
             append!(Int64[i+dist], collect((i):(i+dist-1)))))
     end
     return Voisinage(muts)
+end
+
+
+# composition des voisinage (par exemple un shift suivi d'un swap)
+function compose_vois(vois1::Voisinage,vois2::Voisinage)
+    muts = Mutation[]
+    n = vois1.nb_planes
+    idx_base = collect(1:n)
+
+    for mut1 in vois1.voisins
+        for mut2 in vois2.voisins
+            idx_new = collect(1:n)
+            idx_new[mut1.idx_1] = idx_new[mut1.idx_2]
+            idx_new[mut2.idx_1] = idx_new[mut2.idx_2]
+            push!(muts,Mutation(n,copy(idx_base),idx_new))
+        end
+    end
+
+    composed = Voisinage(muts)
+    clean!(composed) 
+
+    return composed
 end

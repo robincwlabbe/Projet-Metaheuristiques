@@ -118,32 +118,28 @@ function solve!(
     ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
     n = sv.inst.nb_planes
 
+    permutations = liste_blocs_permutation(n,4)
     while !finished(sv)
 
         sv.nb_test += 1
-        copy!(sv.testsol,sv.bestsol)
-        permutations = liste_blocs_permutation(n,4)
+        
         
         # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
         # Random.shuffle!(permutations) 
         # Parcours du voisinage
         for permutation in permutations
-            
+            copy!(sv.testsol,sv.bestsol)
             permu!(sv.testsol,permutation[1],permutation[2])
             if sv.testsol.cost <= sv.cursol.cost
-                
                 copy!(sv.cursol,sv.testsol)
-                
-                if sv.testsol.cost < sv.cursol.cost
-                    break # on change de voisinage dès qu'on améliore la solution
-                end
             end
         end
-        println("\nChangement de voisinage")
-        println("\nNombre d'iterations : ", sv.nb_test)
-        println("\nCoût de la meilleure solution : ", sv.cursol.cost)
+
         # On met à jour si nécessaire
-        if sv.cursol.cost <= sv.bestsol.cost
+        if sv.cursol.cost < sv.bestsol.cost
+            println("\nChangement de voisinage")
+            println("\nNombre d'iterations : ", sv.nb_test)
+            println("\nCoût de la meilleure solution : ", sv.cursol.cost)
             copy!(sv.bestsol,sv.cursol)
             sv.nb_move += 1
 
