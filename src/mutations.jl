@@ -73,12 +73,14 @@ end
 # Voisinages
 
 mutable struct Voisinage
+    name::String
     nb_planes::Int
     voisins::Vector{Mutation}
     clean::Bool
     
-    function Voisinage(voisins::Vector{Mutation})
+    function Voisinage(voisins::Vector{Mutation}, name::String = "undef")
         this = new()
+        this.name = name
         this.voisins = voisins
         this.nb_planes = voisins[1].nb_planes
         return this
@@ -86,8 +88,9 @@ mutable struct Voisinage
 
     function Voisinage(vois::Voisinage)
         this = new()
+        this.name = copy(vois.name)
         this.voisins = copy(vois.voisins)
-        this.nn_planes = copy(vois.nb_planes)
+        this.nb_planes = copy(vois.nb_planes)
         this.clean = copy(vois.clean)
         return this
     end
@@ -154,7 +157,7 @@ function swap_vois(nb_planes::Int, dist::Int)
     for i in 1:nb_planes-dist
         push!(muts, Mutation(nb_planes, [i,i+dist], [i+dist, i]))
     end
-    return Voisinage(muts)
+    return Voisinage(muts, string("s", dist))
 end
 
 
@@ -170,7 +173,7 @@ function shift_vois(nb_planes::Int, dist::Int)
         push!(muts, Mutation(nb_planes, collect(i:(i+dist)),
             append!(Int64[i+dist], collect((i):(i+dist-1)))))
     end
-    return Voisinage(muts)
+    return Voisinage(muts, string("t", dist))
 end
 
 
@@ -189,7 +192,7 @@ function compose_vois(vois1::Voisinage,vois2::Voisinage)
         end
     end
 
-    composed = Voisinage(muts)
+    composed = Voisinage(muts, string(vois1.name, "_", vois2.name))
     clean!(composed) 
 
     return composed
