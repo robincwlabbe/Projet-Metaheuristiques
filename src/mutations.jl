@@ -126,7 +126,7 @@ function clean!(voisinage::Voisinage)
         end
     end
 
-    indices = sort!(unique(indices))
+    indices = Base.sort!(unique(indices))
     deleteat!(voisinage.voisins,indices)
     voisinage.clean = true
 end
