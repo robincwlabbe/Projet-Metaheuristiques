@@ -87,12 +87,10 @@ end
 function solve!(
     sv::VnsSolver;
     startsol::Union{Nothing,Solution} = nothing,
-    durationmax::Int = 1000,
-    permute_type::String = "",
-    break_mode::Bool = false
+    durationmax::Int = 300
 )
     ln2("BEGIN solve!(VnsSolver)")
-    println("\nBreak mode : ", break_mode)
+    println("\nFull exploration mode : ", sv.full_expl)
     if durationmax != 0
         sv.durationmax = durationmax
     end
@@ -129,6 +127,7 @@ function solve!(
         # Une fois qu'on a parcouru tous les voisinages pour une solution
         # courante donnée sans trouver d'améliorations, on s'arrête.
         for voisinage in voisinages
+            println(voisinage.name)
             for mut in voisinage.voisins
                 copy!(sv.testsol, sv.cursol) # on repart de la solution courante
                 sv.nb_test += 1
