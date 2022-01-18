@@ -4,6 +4,7 @@ export Mutation
 export Voisinage
 export swap_vois
 export shift_vois
+export merge,compose_vois,shuffle!,clean!,length
 
 
 # Mutations
@@ -123,12 +124,12 @@ function clean!(voisinage::Voisinage)
         end
     end
 
-    indices = sort!(unique(indices))
+    indices = sort(unique(indices))
     deleteat!(voisinage.voisins,indices)
     voisinage.clean = true
 end
 
-using Random
+
 function shuffle!(voisinage::Voisinage)
     # mélange un voisinage
     # utile si on utilise first break dans SteepestSolver
@@ -193,4 +194,15 @@ function compose_vois(vois1::Voisinage,vois2::Voisinage)
     clean!(composed) 
 
     return composed
+end
+
+function merge(vois1::Voisinage,vois2::Voisinage)
+    voisins = [vois1.voisins;vois2.voisins]
+    vois_merge = Voisinage(voisins)
+    clean!(vois_merge)
+    return vois_merge
+end
+
+function Base.length(vois::Voisinage)
+    return length(vois.voisins)
 end
