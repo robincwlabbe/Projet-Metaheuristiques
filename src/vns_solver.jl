@@ -113,14 +113,15 @@ function solve!(
 
     ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
     n = sv.inst.nb_planes
+    s1 = swap_vois(n,1)
+    voisinages = [s1,
+                  shift_vois(n,2),
+                  swap_vois(n,2),
+                  shift_vois(n,3),
+                  swap_vois(n,3),
+                  compose_vois(s1,s1)]
 
     while !finished(sv)
-
-        voisinages = [swap_vois(n,1),
-                      shift_vois(n,2),
-                      swap_vois(n,2),
-                      shift_vois(n,3),
-                      swap_vois(n,3)]
         
         # Parcourir les voisinages successifs
         # si aucune solution ameliorante n'a été trouvée, on passe au prochain.
