@@ -87,12 +87,10 @@ end
 function solve!(
     sv::VnsSolver;
     startsol::Union{Nothing,Solution} = nothing,
-    durationmax::Int = 1000,
-    permute_type::String = "",
-    break_mode::Bool = false
+    durationmax::Int = 300
 )
     ln2("BEGIN solve!(VnsSolver)")
-    println("\nBreak mode : ", break_mode)
+    println("\nFull exploration mode : ", sv.full_expl)
     if durationmax != 0
         sv.durationmax = durationmax
     end
@@ -115,20 +113,22 @@ function solve!(
 
     ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
     n = sv.inst.nb_planes
+    s1 = swap_vois(n,1)
+    voisinages = [s1,
+                  shift_vois(n,2),
+                  swap_vois(n,2),
+                  shift_vois(n,3),
+                  swap_vois(n,3),
+                  compose_vois(s1,s1)]
 
     while !finished(sv)
-
-        voisinages = [swap_vois(n,1),
-                      shift_vois(n,2),
-                      swap_vois(n,2),
-                      shift_vois(n,3),
-                      swap_vois(n,3)]
         
         # Parcourir les voisinages successifs
         # si aucune solution ameliorante n'a été trouvée, on passe au prochain.
         # Une fois qu'on a parcouru tous les voisinages pour une solution
         # courante donnée sans trouver d'améliorations, on s'arrête.
         for voisinage in voisinages
+            println(voisinage.name)
             for mut in voisinage.voisins
                 copy!(sv.testsol, sv.cursol) # on repart de la solution courante
                 sv.nb_test += 1
