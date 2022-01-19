@@ -1,12 +1,12 @@
 # ALP solution version 1.0
-name alp_07_p44_k3  # nb_planes=44
+name alp_07_p44  # nb_planes=44
 # Solution valide
-timestamp 2019-07-08T17:06:57.517
+timestamp 2022-01-17T19:43:50.302
 cost 1550.0
 order [p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,p24,p25,p26,p27,p28,p29,p30,p31,p32,p33,p34,p35,p36,p37,p38,p39,p40,p41,p42,p43,p44]
 
 #       name     t   dt  cost        # comments
-landing   p1     1    0    0.0000000   # E=1    T=1    L=1       ep=0.00   tp=0.00   sep  -ok- 
+landing   p1     1    0    0.0000000   # E=1    T=1    L=1       ep=2.00   tp=2.00   sep  -ok- 
 landing   p2    97  -41   82.0000000   # E=80   T=138  L=197     ep=2.00   tp=2.00   sep  96(96) -ok- 
 landing   p3   297   25   25.0000000   # E=147  T=272  L=397     ep=1.00   tp=1.00   sep  200(200) 296(200) -ok- 
 landing   p4   377   25   25.0000000   # E=227  T=352  L=477     ep=1.00   tp=1.00   sep  80(80) 280(200) 376(200) -ok- 
