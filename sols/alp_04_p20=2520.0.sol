@@ -1,7 +1,7 @@
 # ALP solution version 1.0
-name alp_04_p20_k3  # nb_planes=20
+name alp_04_p20  # nb_planes=20
 # Solution valide
-timestamp 2019-07-08T17:05:46.306
+timestamp 2022-01-17T19:42:03.773
 cost 2520.0
 order [p1,p2,p5,p9,p8,p6,p7,p13,p12,p16,p19,p18,p17,p15,p3,p4,p10,p14,p11,p20]
 
