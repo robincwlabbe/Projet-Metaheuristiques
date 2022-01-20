@@ -88,7 +88,6 @@ function solve!(
     sv::SteepestSolver;
     startsol::Union{Nothing,Solution} = nothing,
     durationmax::Int = 100,
-    permute_type::String = "",
 )
 
     ln2("BEGIN solve!(SteepestSolver)")
@@ -116,17 +115,55 @@ function solve!(
         first_best = true
     end
 
+    # Choix du voisinage
+    vois = string(Args.get("nbh"))
+    
+    n = sv.inst.nb_planes
+    voisinage = Voisinage([Mutation(0,Int64[],Int64[])])
+    if occursin("s1",vois)
+        voisinage = merge(voisinage,swap_vois(n,1))
+    end
+    if occursin("s2",vois)
+        voisinage = merge(voisinage,swap_vois(n,2))
+    end
+    if occursin("s3",vois)
+        voisinage = merge(voisinage,swap_vois(n,3))
+    end
+    if occursin("t2",vois)
+        voisinage = merge(voisinage,shift_vois(n,2))
+    end
+    if occursin("t3",vois)
+        voisinage = merge(voisinage,shift_vois(n,3))
+    end
+    if occursin("s1_s1",vois)
+        voisinage = merge(voisinage,compose_vois(swap_vois(n,1),swap_vois(n,1)))
+    end
+    if occursin("s2_s1",vois) || occursin("s1_s2",vois)
+        voisinage = merge(voisinage,compose_vois(swap_vois(n,2),swap_vois(n,1)))
+    end
+    if occursin("s2_s2",vois)
+        voisinage = merge(voisinage,compose_vois(swap_vois(n,2),swap_vois(n,2)))
+    end
+    if occursin("t2_s1",vois) || occursin("s1_t2",vois)
+        voisinage = merge(voisinage,compose_vois(shift_vois(n,2),swap_vois(n,2)))
+    end
+    if Args.get("nbh")==:AUTO
+        voisinage = merge(swap_vois(n,1),swap_vois(n,2))
+        voisinage = merge(voisinage,shift_vois(n,2))
+        voisinage = merge(voisinage,swap_vois(n,3))
+    end
+
     if lg3()
         println("Début de solve : get_stats(sv)=\n", get_stats(sv))
     end
 
-    #ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
-    n = sv.inst.nb_planes
+    ln1("\niter <nb_test> = <nb_move>+<nb_unfortunate_try> <movedesc> => bestcost=...")
+    # n = sv.inst.nb_planes
 
-    # Création du voisinage
-    voisinage = merge(swap_vois(n,1),swap_vois(n,2))
-    voisinage = merge(voisinage,shift_vois(n,2))
-    voisinage = merge(voisinage,swap_vois(n,3))
+    # # Création du voisinage
+    # voisinage = merge(swap_vois(n,1),swap_vois(n,2))
+    # voisinage = merge(voisinage,shift_vois(n,2))
+    # voisinage = merge(voisinage,swap_vois(n,3))
 
     # voisinage = merge(voisinage,compose_vois(swap_vois(n,1),swap_vois(n,1)))
     # voisinage = merge(voisinage,compose_vois(swap_vois(n,1),shift_vois(n,2)))
@@ -135,12 +172,13 @@ function solve!(
 
     while !finished(sv)
 
-        sv.nb_test += 1
+        
         # Parcourir le voisinage dans un ordre systématique ne semble pas une bonne idée
         # Random.shuffle!(permutations) 
         # Parcours du voisinage
         
         for mut in voisinage.voisins
+            sv.nb_test += 1
             copy!(sv.testsol,sv.bestsol)
             permu!(sv.testsol,mut.idx_1,mut.idx_2)
             if sv.testsol.cost < sv.bestsol.cost
@@ -153,10 +191,9 @@ function solve!(
 
         # On met à jour si nécessaire
         if sv.cursol.cost < sv.bestsol.cost
-            println("\nChangement de voisinage")
-            println("\nNombre d'iterations : ", sv.nb_test)
-            println("\nCoût de la meilleure solution : ", sv.cursol.cost)
-            copy!(sv.bestsol,sv.cursol)
+            ln3("\nChangement de voisinage")
+            record_bestsol(sv)
+            ln3("\n",to_s(sv.bestsol))
             sv.nb_move += 1
 
         # Sinon c'est qu'on est bloqué dans un optimum (local ou global)
@@ -165,21 +202,21 @@ function solve!(
         end
 
     end # fin while !finished
-
+    sv.do_save_bestsol = true
     ln2("END solve!(SteepestSolver)")
     println("="^70)
-    println("\n",to_s(sv.bestsol))
+    record_bestsol(sv)
 end
 
 function record_bestsol(sv::SteepestSolver; movemsg = "")
     copy!(sv.bestsol, sv.cursol)
     sv.bestiter = sv.nb_test
     if lg3()
-        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_test-sv.nb_move) ")
         print("$movemsg ")
         print("bestsol=$(to_s(sv.bestsol))")
     elseif lg1()
-        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_reject) ")
+        print("\niter $(rpad(sv.nb_test, 4))= $(sv.nb_move)+$(sv.nb_test-sv.nb_move) ")
         print("$movemsg => bestcost=", sv.cursol.cost)
     end
     #println("À COMPLÉTER POUR SEQATA !")
