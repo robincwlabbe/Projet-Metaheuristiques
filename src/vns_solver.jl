@@ -111,22 +111,24 @@ function solve!(
         println("Début de solve : get_stats(sv)=\n", get_stats(sv))
     end
 
-    ln1("\niter <nb_test> = <nb_move>+<nb_reject> <movedesc> => bestcost=...")
+    ln1("\niter <nb_test> nb_move <nb_move> => bestcost=...")
     n = sv.inst.nb_planes
     s1 = swap_vois(n,1)
     voisinages = [s1,
-                  shift_vois(n,2),
                   swap_vois(n,2),
-                  shift_vois(n,3),
+                  shift_vois(n,2),
                   swap_vois(n,3),
+                  shift_vois(n,3),
                   compose_vois(s1,s1)]
 
+    sv.nb_move=0
     while !finished(sv)
         
         # Parcourir les voisinages successifs
         # si aucune solution ameliorante n'a été trouvée, on passe au prochain.
         # Une fois qu'on a parcouru tous les voisinages pour une solution
         # courante donnée sans trouver d'améliorations, on s'arrête.
+        println("\n")
         for voisinage in voisinages
             println(voisinage.name)
             for mut in voisinage.voisins
@@ -157,11 +159,20 @@ function solve!(
             # sinon, on continue jusqu'à la fin de la boucle
         end
         if sv.bestsol.cost < sv.cursol.cost
-            println("\nChangement de voisinage")
-            println("\nNombre d'iterations : ", sv.nb_test)
-            println("\nCoût de la meilleure solution : ", sv.bestsol.cost)
+            #println("\nChangement de voisinage")
+            #println("\nNombre d'iterations : ", sv.nb_test)
+            #println("\nCoût de la meilleure solution : ", sv.bestsol.cost)
             copy!(sv.cursol,sv.bestsol)
             sv.nb_move += 1
+            if lg3()
+                print("\niter $(rpad(sv.nb_test, 6))")
+                print(" nb_move $(rpad(sv.nb_move, 3)) => ")
+                print("bestsol=$(to_s(sv.bestsol))")
+            elseif lg1()
+                print("\niter $(rpad(sv.nb_test, 6))")
+                print(" nb_move $(rpad(sv.nb_move, 3)) => ")
+                print("bestcost=", sv.cursol.cost)
+            end
         else
             # on a parcouru tous les voisinages sans trouver de meilleures solutions
             sv.blocked = true
